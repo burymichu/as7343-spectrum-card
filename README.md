@@ -121,7 +121,6 @@ This project was inspired by and builds upon the work of **[goatboynz/HA-par-spe
 
 ### Changes in this AS7343 version:
 - Adapted for the 14-channel ams-OSRAM AS7343 sensor (F1–F8, FZ, FY, FXL, NIR, VIS).
-- Uses Catmull-Rom spline interpolation for the curve.
 - Added summary tiles for ratios (R:FR, B:R) and estimated PPFD.
 
 ---
