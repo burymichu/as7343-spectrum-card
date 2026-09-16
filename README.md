@@ -71,11 +71,47 @@ show_clear_nir: true
 
 ---
 
-## Sensor Auto-Discovery
+## Sensor Auto-Discovery & Universal Compatibility
 
-The card automatically matches entities by default naming patterns:
-- Channels: `sensor.*as7343_f1*`, `sensor.*as7343_fz*`, `sensor.*as7343_nir*`, etc.
-- Derived metrics: `sensor.*ppfd*`, `sensor.*r_fr*`, `sensor.*b_r*`, `sensor.*clear*`.
+The card automatically matches entities without requiring manual configuration. It is compatible out-of-the-box with multiple firmware implementations:
+
+1. **[burymichu/esphome-as7343](https://github.com/burymichu/esphome-as7343)** (Standalone YAML or external component):
+   - Channels: `sensor.*as7343_f1*`, `sensor.*as7343_fz*`, `sensor.*as7343_fxl*`, etc.
+   - Metrics: `sensor.*r_fr*`, `sensor.*b_r*`, `sensor.*ppfd*`, `sensor.*par_proxy*`, `sensor.*clear*`
+2. **`as734x` / `latonita` fork**:
+   - Nanometer channel naming: `sensor.*380nm*`, `sensor.*415nm*`, `sensor.*445nm*`, `sensor.*480nm*`, `sensor.*515nm*`, `sensor.*555nm*`, `sensor.*590nm*`, `sensor.*630nm*`, `sensor.*680nm*`, `sensor.*730nm*`, `sensor.*910nm*`, `sensor.*nir*`
+   - Additional metrics: `sensor.*lux*`, `sensor.*cct*` (illuminance and color temperature tiles are shown automatically when available)
+3. **Generic ESPHome channel codes**:
+   - Channels matching `_f1`, `_f2`, `_fz`, `_f3`, `_f4`, `_fy`, `_f5`, `_fxl`, `_f6`, `_f7`, `_f8`, `_nir`, `_clear`
+
+### Manual Entity Mapping (Optional)
+
+If your entity names follow a custom pattern, you can explicitly map them in YAML:
+
+```yaml
+type: custom:as7343-spectrum-card
+title: LIGHT SPECTRUM
+entities:
+  f1: sensor.my_sensor_f1
+  f2: sensor.my_sensor_f2
+  fz: sensor.my_sensor_fz
+  f3: sensor.my_sensor_f3
+  f4: sensor.my_sensor_f4
+  f5: sensor.my_sensor_f5
+  fy: sensor.my_sensor_fy
+  fxl: sensor.my_sensor_fxl
+  f6: sensor.my_sensor_f6
+  f7: sensor.my_sensor_f7
+  f8: sensor.my_sensor_f8
+  nir: sensor.my_sensor_nir
+  clear: sensor.my_sensor_clear
+  # Optional metrics:
+  ppfd: sensor.my_sensor_ppfd
+  r_fr: sensor.my_sensor_r_fr
+  b_r: sensor.my_sensor_b_r
+  lux: sensor.my_sensor_lux
+  cct: sensor.my_sensor_cct
+```
 
 ---
 

@@ -45,18 +45,18 @@ class AS7343SpectrumCard extends HTMLElement {
 
   getChannelDefs() {
     return [
-      { id: 'f1',  name: 'F1 (Violet)',       wl: 405, color: '#8A2BE2' },
-      { id: 'f2',  name: 'F2 (Indigo)',       wl: 425, color: '#4169E1' },
-      { id: 'fz',  name: 'FZ (Blue)',         wl: 450, color: '#0055FF' },
-      { id: 'f3',  name: 'F3 (Cyan-Blue)',    wl: 475, color: '#00BFFF' },
-      { id: 'f4',  name: 'F4 (Cyan)',         wl: 515, color: '#00FA9A' },
-      { id: 'f5',  name: 'F5 (Green)',        wl: 550, color: '#00FF00' },
-      { id: 'fy',  name: 'FY (Wide Green)',   wl: 555, color: '#7FFF00', isWide: true },
-      { id: 'fxl', name: 'FXL (Orange)',      wl: 600, color: '#FFA500' },
-      { id: 'f6',  name: 'F6 (Red)',          wl: 640, color: '#FF3300' },
-      { id: 'f7',  name: 'F7 (Deep Red)',     wl: 690, color: '#DC143C' },
-      { id: 'f8',  name: 'F8 (Far-Red)',      wl: 745, color: '#800000' },
-      { id: 'nir', name: 'NIR (Near-IR)',     wl: 855, color: '#4A0E4E' }
+      { id: 'f1',  name: 'F1 (Violet)',       wl: 405, color: '#8A2BE2', aliases: ['405nm', '380nm', '405', '380'] },
+      { id: 'f2',  name: 'F2 (Indigo)',       wl: 425, color: '#4169E1', aliases: ['425nm', '415nm', '425', '415'] },
+      { id: 'fz',  name: 'FZ (Blue)',         wl: 450, color: '#0055FF', aliases: ['450nm', '445nm', '450', '445'] },
+      { id: 'f3',  name: 'F3 (Cyan-Blue)',    wl: 475, color: '#00BFFF', aliases: ['475nm', '480nm', '475', '480'] },
+      { id: 'f4',  name: 'F4 (Cyan)',         wl: 515, color: '#00FA9A', aliases: ['515nm', '515'] },
+      { id: 'f5',  name: 'F5 (Green)',        wl: 550, color: '#00FF00', aliases: ['550nm', '590nm', '550', '590'] },
+      { id: 'fy',  name: 'FY (Wide Green)',   wl: 555, color: '#7FFF00', isWide: true, aliases: ['555nm', '555'] },
+      { id: 'fxl', name: 'FXL (Orange)',      wl: 600, color: '#FFA500', aliases: ['600nm', '630nm', '600', '630'] },
+      { id: 'f6',  name: 'F6 (Red)',          wl: 640, color: '#FF3300', aliases: ['640nm', '680nm', '640', '680'] },
+      { id: 'f7',  name: 'F7 (Deep Red)',     wl: 690, color: '#DC143C', aliases: ['690nm', '730nm', '690', '730'] },
+      { id: 'f8',  name: 'F8 (Far-Red)',      wl: 745, color: '#800000', aliases: ['745nm', '910nm', '745', '910'] },
+      { id: 'nir', name: 'NIR (Near-IR)',     wl: 855, color: '#4A0E4E', aliases: ['855nm', '850nm', 'nir'] }
     ];
   }
 
@@ -73,10 +73,25 @@ class AS7343SpectrumCard extends HTMLElement {
       if (matched) return this._hass.states[matched];
     }
 
-    const allStates = Object.keys(this._hass.states);
+    const allSensorIds = Object.keys(this._hass.states).filter(id => id.startsWith('sensor.'));
+    const candidateIds = this.config.device 
+      ? allSensorIds.filter(id => id.toLowerCase().includes(this.config.device.toLowerCase())) 
+      : allSensorIds;
+
     for (const pattern of fallbackPatterns) {
-      const found = allStates.find(id => id.includes(pattern));
-      if (found) return this._hass.states[found];
+      const p = pattern.toLowerCase();
+      // 1. Boundary match: token delimited by non-alphanumeric or start/end
+      const boundaryMatch = candidateIds.find(id => {
+        const regex = new RegExp(`(^|[^a-z0-9])${p}([^a-z0-9]|$)`, 'i');
+        return regex.test(id);
+      });
+      if (boundaryMatch) return this._hass.states[boundaryMatch];
+
+      // 2. Substring match for specific longer tokens
+      if (p.length >= 4 || p.startsWith('_')) {
+        const subMatch = candidateIds.find(id => id.toLowerCase().includes(p));
+        if (subMatch) return this._hass.states[subMatch];
+      }
     }
     return null;
   }
@@ -90,11 +105,23 @@ class AS7343SpectrumCard extends HTMLElement {
     let peakChannel = null;
 
     for (const ch of defs) {
-      const entity = this.resolveEntity(ch.id, [
+      const patterns = [
         `as7343_${ch.id}`,
+        `as734x_${ch.id}`,
+        `_${ch.id}_counts`,
+        `_${ch.id}`,
+        `${ch.id}`,
         `as7343_${ch.wl}`,
-        `as7343_ch_${ch.id}`
-      ]);
+        `${ch.wl}nm`
+      ];
+      if (ch.aliases) {
+        for (const alias of ch.aliases) {
+          patterns.push(`_${alias}`);
+          patterns.push(alias);
+        }
+      }
+
+      const entity = this.resolveEntity(ch.id, patterns);
       const rawVal = entity ? parseFloat(entity.state) : 0;
       // Hardware glitch filter: discard corrupted values > 18000 counts
       const val = (!isNaN(rawVal) && rawVal <= 18000) ? rawVal : 0;
@@ -115,11 +142,13 @@ class AS7343SpectrumCard extends HTMLElement {
     this._peakChannel = peakChannel;
 
     // Resolve metrics from Home Assistant
-    const r_fr_entity = this.resolveEntity('r_fr', ['r_fr', 'wskaznik_r_fr']);
-    const b_r_entity  = this.resolveEntity('b_r', ['b_r', 'wskaznik_b_r']);
-    const par_entity  = this.resolveEntity('par', ['par_proxy', 'par']);
-    const ppfd_entity = this.resolveEntity('ppfd', ['szacowane_ppfd', 'estimated_ppfd', 'ppfd']);
-    const clear_entity= this.resolveEntity('clear', ['as7343_vis', 'as7343_clear', 'clear']);
+    const r_fr_entity = this.resolveEntity('r_fr', ['r_fr', 'wskaznik_r_fr', 'red_far_red']);
+    const b_r_entity  = this.resolveEntity('b_r', ['b_r', 'wskaznik_b_r', 'blue_red']);
+    const par_entity  = this.resolveEntity('par', ['par_proxy', '_par', 'par']);
+    const ppfd_entity = this.resolveEntity('ppfd', ['szacowane_ppfd', 'estimated_ppfd', '_ppfd', 'ppfd']);
+    const clear_entity= this.resolveEntity('clear', ['as7343_vis', 'as734x_vis', 'as7343_clear', 'as734x_clear', '_clear', '_vis', 'clear']);
+    const lux_entity  = this.resolveEntity('lux', ['_lux', 'lux', 'illuminance']);
+    const cct_entity  = this.resolveEntity('cct', ['_cct', 'cct', 'kelvin', 'color_temp']);
 
     // R:FR ratio calculation
     let r_fr_num = null;
@@ -156,12 +185,24 @@ class AS7343SpectrumCard extends HTMLElement {
       clear_num = parseFloat(clear_entity.state);
     }
 
+    let lux_num = null;
+    if (lux_entity && !isNaN(parseFloat(lux_entity.state))) {
+      lux_num = parseFloat(lux_entity.state);
+    }
+
+    let cct_num = null;
+    if (cct_entity && !isNaN(parseFloat(cct_entity.state))) {
+      cct_num = parseFloat(cct_entity.state);
+    }
+
     this._metrics = {
       r_fr: r_fr_num,
       b_r: b_r_num,
       par: par_num,
       ppfd: ppfd_num,
-      clear: clear_num
+      clear: clear_num,
+      lux: lux_num,
+      cct: cct_num
     };
 
     this.renderBadges();
@@ -325,6 +366,24 @@ class AS7343SpectrumCard extends HTMLElement {
         val: cVal >= 1000 ? `${(cVal/1000).toFixed(1)}k` : Math.round(cVal),
         sub: 'Broadband VIS',
         color: '#ffffff'
+      });
+    }
+
+    if (this._metrics.lux !== null) {
+      cards.push({
+        title: 'Lux',
+        val: this._metrics.lux >= 1000 ? `${(this._metrics.lux/1000).toFixed(1)}k` : Math.round(this._metrics.lux),
+        sub: 'Illuminance',
+        color: '#FFD700'
+      });
+    }
+
+    if (this._metrics.cct !== null) {
+      cards.push({
+        title: 'CCT',
+        val: `${Math.round(this._metrics.cct)} <span style="font-size:11px;font-weight:400;color:var(--secondary-text-color)">K</span>`,
+        sub: 'Color Temp',
+        color: '#87CEEB'
       });
     }
 
@@ -589,11 +648,18 @@ class AS7343SpectrumCard extends HTMLElement {
   }
 }
 
-customElements.define('as7343-spectrum-card', AS7343SpectrumCard);
+if (!customElements.get('as7343-spectrum-card')) {
+  customElements.define('as7343-spectrum-card', AS7343SpectrumCard);
+}
+if (!customElements.get('as7343-universal-test-card')) {
+  customElements.define('as7343-universal-test-card', AS7343SpectrumCard);
+}
 
 window.customCards = window.customCards || [];
-window.customCards.push({
-  type: 'as7343-spectrum-card',
-  name: 'AS7343 Light Spectrum Card',
-  description: 'A universal 14-channel spectral visualization card with Catmull-Rom spline curves for Home Assistant and ams-OSRAM AS7343.'
-});
+if (!window.customCards.some(c => c.type === 'as7343-spectrum-card')) {
+  window.customCards.push({
+    type: 'as7343-spectrum-card',
+    name: 'AS7343 Light Spectrum Card',
+    description: 'A universal 14-channel spectral visualization card with Catmull-Rom spline curves for Home Assistant and ams-OSRAM AS7343.'
+  });
+}
