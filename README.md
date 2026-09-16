@@ -3,9 +3,9 @@
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/default)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A modern, universal multi-spectral visualization card for Home Assistant, designed specifically for the **ams-OSRAM AS7343 14-channel spectral sensor**.
+A Home Assistant custom Lovelace card for visualizing spectral data from the **ams-OSRAM AS7343 14-channel spectral sensor**.
 
-Features continuous **Catmull-Rom spline curve interpolation**, a physics-based wavelength color gradient, interactive hover/touch tooltips, peak wavelength identification, and optional telemetry badges (PPFD, R:FR, B:R, VIS Clear, NIR).
+Draws a smooth curve across channels using Catmull-Rom spline interpolation, with color fill matching the spectrum bands, hover/touch tooltips, peak wavelength indication, and summary metric tiles.
 
 ![AS7343 Spectrum Card](screenshot.png)
 
@@ -13,12 +13,12 @@ Features continuous **Catmull-Rom spline curve interpolation**, a physics-based 
 
 ## Features
 
-- **Continuous Spectral Spline Graph**: Generates a smooth, continuous curve across all 14 optical channels (405nm to 855nm) using Catmull-Rom spline interpolation.
-- **Physics-Based Photon Wavelength Gradient**: Realistic visual spectrum color fill across Violet, Blue, Cyan, Green, Yellow, Orange, Red, Deep-Red, Far-Red, and Near-Infrared bands.
-- **Universal & Agnostic**: Designed for any lighting application (horticulture, aquarium lighting, photography, lab analysis, or smart home light quality monitoring).
-- **Interactive Tooltips**: Hover or touch any spectral data point on desktop or mobile to inspect the exact channel name, wavelength (nm), and measured intensity.
-- **Peak Wavelength Detection**: Automatically flags the dominant optical wavelength in real time.
-- **Telemetry Metric Badges**: Clean, optional parameter tiles displaying PPFD, R:FR ratio, B:R ratio, VIS Clear, and NIR readings.
+- **Smooth Spectral Curve**: Connects channel readings (405nm to 855nm) using Catmull-Rom spline interpolation.
+- **Spectrum Color Gradient**: Color fill across violet, blue, cyan, green, yellow, orange, red, far-red, and NIR bands.
+- **Interactive Tooltips**: Hover or tap any data point to inspect the channel name, wavelength (nm), and raw count.
+- **Peak Wavelength**: Displays the channel with the highest reading in the header.
+- **Summary Tiles**: Shows R:FR, B:R, estimated PPFD, and VIS Clear if matching sensors are available.
+- **Auto-Discovery**: Detects AS7343 entities automatically or accepts manual entity mapping in YAML.
 
 ---
 
@@ -37,7 +37,7 @@ Features continuous **Catmull-Rom spline curve interpolation**, a physics-based 
 
 1. Download `dist/as7343-spectrum-card.js`.
 2. Copy it into your Home Assistant `<config>/www/` directory.
-3. In Home Assistant, navigate to **Settings** > **Dashboards** > **Resources** (top-right menu).
+3. In Home Assistant, navigate to **Settings** > **Dashboards** > **Resources**.
 4. Add resource:
    - URL: `/local/as7343-spectrum-card.js`
    - Resource type: `JavaScript Module`
@@ -47,7 +47,7 @@ Features continuous **Catmull-Rom spline curve interpolation**, a physics-based 
 
 ## Configuration
 
-Add the card to your dashboard via the visual editor or YAML:
+Add the card via the UI editor or YAML:
 
 ```yaml
 type: custom:as7343-spectrum-card
@@ -65,15 +65,15 @@ show_clear_nir: true
 | `type` | string | **Required** | `custom:as7343-spectrum-card` |
 | `title` | string | `LIGHT SPECTRUM` | Card header title |
 | `height` | number | `260` | Canvas graph height in pixels |
-| `show_badges` | boolean | `true` | Display metric summary badges (PPFD, R:FR, B:R, etc.) |
-| `show_dots` | boolean | `true` | Display channel data points on the curve |
-| `show_clear_nir` | boolean | `true` | Display VIS Clear and NIR badges in the metrics grid |
+| `show_badges` | boolean | `true` | Show summary tiles (R:FR, B:R, PPFD, etc.) |
+| `show_dots` | boolean | `true` | Show channel dots on the curve |
+| `show_clear_nir` | boolean | `true` | Show VIS Clear tile in the summary grid |
 
 ---
 
 ## Sensor Auto-Discovery
 
-The card automatically detects AS7343 sensor entities matching standard ESPHome naming patterns:
+The card automatically matches entities by default naming patterns:
 - Channels: `sensor.*as7343_f1*`, `sensor.*as7343_fz*`, `sensor.*as7343_nir*`, etc.
 - Derived metrics: `sensor.*ppfd*`, `sensor.*r_fr*`, `sensor.*b_r*`, `sensor.*clear*`.
 
@@ -81,15 +81,15 @@ The card automatically detects AS7343 sensor entities matching standard ESPHome 
 
 ## Acknowledgements & Credits
 
-This project was inspired by and builds upon the excellent work of **[goatboynz/HA-par-spectrum-card](https://github.com/goatboynz/HA-par-spectrum-card)** (originally created for the AS7341 sensor). I extend my sincere gratitude and appreciation to **@goatboynz** for pioneering spectral visualization in Home Assistant.
+This project was inspired by and builds upon the work of **[goatboynz/HA-par-spectrum-card](https://github.com/goatboynz/HA-par-spectrum-card)** (originally created for the AS7341 sensor). Thanks to **@goatboynz** for pioneering spectral visualization in Home Assistant.
 
-### Key Evolutions in this AS7343 Edition:
-- **14 Optical Channels**: Upgraded from 8-channel setups to the full 14-channel optical matrix of the ams-OSRAM AS7343 (F1–F8, FZ, FY, FXL, NIR, VIS).
-- **Smooth Spline Mapping**: Implemented continuous Catmull-Rom cubic spline interpolation for high-resolution physics curves.
-- **Universal Architecture**: Built as a lightweight, generic Lovelace component compatible with any smart home lighting environment.
+### Changes in this AS7343 version:
+- Adapted for the 14-channel ams-OSRAM AS7343 sensor (F1–F8, FZ, FY, FXL, NIR, VIS).
+- Uses Catmull-Rom spline interpolation for the curve.
+- Added summary tiles for ratios (R:FR, B:R) and estimated PPFD.
 
 ---
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License - see the [LICENSE](LICENSE) file for details.
