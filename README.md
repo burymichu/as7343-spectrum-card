@@ -3,22 +3,27 @@
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/default)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A Home Assistant custom Lovelace card for visualizing spectral data from the **ams-OSRAM AS7343 14-channel spectral sensor**.
+A Home Assistant custom Lovelace card for visualizing spectral distribution and irradiance from the **ams-OSRAM AS7343 14-channel spectral sensor**.
 
-Draws a smooth curve across channels using Catmull-Rom spline interpolation, with color fill matching the spectrum bands, hover/touch tooltips, peak wavelength indication, and summary metric tiles.
+This card performs **mathematical spectrum reconstruction** using ams-OSRAM's official 12-channel vendor basis matrix (125 spectral sample points, 380 nm to 1000 nm in 5 nm increments) and renders a smooth, high-resolution spectral curve scaled in physical **Spectral Irradiance [$\text{mW}/(\text{m}^2 \cdot \text{nm})$]**.
 
 ![AS7343 Spectrum Card](screenshot.png)
 
 ---
 
-## Features
+## Key Features
 
-- **Smooth Spectral Curve**: Connects channel readings (405nm to 855nm) using Catmull-Rom spline interpolation.
-- **Spectrum Color Gradient**: Color fill across violet, blue, cyan, green, yellow, orange, red, far-red, and NIR bands.
-- **Interactive Tooltips**: Hover or tap any data point to inspect the channel name, wavelength (nm), and raw count.
-- **Peak Wavelength**: Displays the channel with the highest reading in the header.
-- **Summary Tiles**: Shows R:FR, B:R, estimated PPFD, and VIS Clear if matching sensors are available.
-- **Auto-Discovery**: Detects AS7343 entities automatically or accepts manual entity mapping in YAML.
+- **1:1 ams-OSRAM Mathematical Spectrum Reconstruction**: Reconstructs the continuous light spectrum from the 12 sensor channels using ams-OSRAM's vendor basis matrix (`SPECTRAL_BASIS.as7343`, 380–1000 nm at 5 nm resolution).
+- **Physical Spectral Irradiance**: Scaled to absolute physical units ($\text{mW}/(\text{m}^2 \cdot \text{nm})$) via Planck-Einstein energy integration across the PAR waveband (400–700 nm), providing accurate curve heights that dynamically reflect dimming and light levels.
+- **Spectrum Color Gradient**: Rich rainbow gradient fill with ambient glow matching standard CIE / visible wavelength color profiles.
+- **Interactive Inspection Tooltips**: Hover or touch any point along the curve to see the exact wavelength (nm), color band, spectral irradiance ($\text{mW}/(\text{m}^2 \cdot \text{nm})$), and the nearest physical sensor channel reading in raw counts.
+- **Dynamic Peak Wavelength Tracker**: Displays the dominant peak wavelength in the card header with an adaptive spectral color indicator.
+- **Universal Optical Metrics**:
+  - **Peak Wavelength & Band**: Identifies the primary spectral emission (e.g. 450 nm Royal Blue, 660 nm Deep Red).
+  - **R:FR Ratio (690 / 745 nm)**: Calibrated Red to Far-Red ratio for phytochrome response and light quality.
+  - **B:R Ratio (450 / 690 nm)**: Blue to Red balance indicator.
+  - **PPFD / PAR / Lux**: Photon flux density (or Illuminance / Clear counts) when available.
+- **Universal Auto-Discovery**: Automatically matches AS7343 channels from popular ESPHome configurations without manual YAML mapping.
 
 ---
 
@@ -47,15 +52,14 @@ Draws a smooth curve across channels using Catmull-Rom spline interpolation, wit
 
 ## Configuration
 
-Add the card via the UI editor or YAML:
+Add the card to your dashboard via the Lovelace UI editor or YAML:
 
 ```yaml
 type: custom:as7343-spectrum-card
 title: LIGHT SPECTRUM
-height: 260
+height: 280
 show_badges: true
-show_dots: true
-show_clear_nir: true
+axis: [380, 790]
 ```
 
 ### Options
@@ -64,29 +68,28 @@ show_clear_nir: true
 | :--- | :--- | :--- | :--- |
 | `type` | string | **Required** | `custom:as7343-spectrum-card` |
 | `title` | string | `LIGHT SPECTRUM` | Card header title |
-| `height` | number | `260` | Canvas graph height in pixels |
-| `show_badges` | boolean | `true` | Show summary tiles (R:FR, B:R, PPFD, etc.) |
-| `show_dots` | boolean | `true` | Show channel dots on the curve |
-| `show_clear_nir` | boolean | `true` | Show VIS Clear tile in the summary grid |
+| `height` | number | `280` | Canvas graph height in pixels |
+| `show_badges` | boolean | `true` | Show summary metric tiles (Peak, R:FR, B:R, PPFD) |
+| `axis` | list | `[380, 790]` | Wavelength range for X-axis `[min, max]` (e.g. `[380, 790]` or `[380, 1000]`) |
+| `entities` | object | *Auto* | Optional manual entity overrides |
 
 ---
 
 ## Sensor Auto-Discovery & Universal Compatibility
 
-The card automatically matches entities without requiring manual configuration. It is compatible out-of-the-box with multiple firmware implementations:
+The card automatically matches entities without requiring manual configuration. It works out-of-the-box with multiple firmware implementations:
 
-1. **[burymichu/esphome-as7343](https://github.com/burymichu/esphome-as7343)** (Standalone YAML or external component):
+1. **[burymichu/esphome-as7343](https://github.com/burymichu/esphome-as7343)**:
    - Channels: `sensor.*as7343_f1*`, `sensor.*as7343_fz*`, `sensor.*as7343_fxl*`, etc.
-   - Metrics: `sensor.*r_fr*`, `sensor.*b_r*`, `sensor.*ppfd*`, `sensor.*par_proxy*`, `sensor.*clear*`
-2. **`as734x` / `latonita` fork**:
-   - Nanometer channel naming: `sensor.*380nm*`, `sensor.*415nm*`, `sensor.*445nm*`, `sensor.*480nm*`, `sensor.*515nm*`, `sensor.*555nm*`, `sensor.*590nm*`, `sensor.*630nm*`, `sensor.*680nm*`, `sensor.*730nm*`, `sensor.*910nm*`, `sensor.*nir*`
-   - Additional metrics: `sensor.*lux*`, `sensor.*cct*` (illuminance and color temperature tiles are shown automatically when available)
-3. **Generic ESPHome channel codes**:
-   - Channels matching `_f1`, `_f2`, `_fz`, `_f3`, `_f4`, `_fy`, `_f5`, `_fxl`, `_f6`, `_f7`, `_f8`, `_nir`, `_clear`
+   - Metrics: `sensor.*r_fr*`, `sensor.*b_r*`, `sensor.*ppfd*`, `sensor.*clear*`, `sensor.*lux*`
+2. **`as734x` / `latonita` naming scheme**:
+   - Nanometer channel naming: `sensor.*380nm*`, `sensor.*415nm*`, `sensor.*445nm*`, `sensor.*480nm*`, `sensor.*515nm*`, `sensor.*555nm*`, `sensor.*590nm*`, `sensor.*630nm*`, `sensor.*680nm*`, `sensor.*730nm*`, `sensor.*nir*`
+3. **Generic AS7343 channel suffixes**:
+   - Channels ending in `_f1`, `_f2`, `_fz`, `_f3`, `_f4`, `_fy`, `_f5`, `_fxl`, `_f6`, `_f7`, `_f8`, `_nir`, `_clear`
 
 ### Manual Entity Mapping (Optional)
 
-If your entity names follow a custom pattern, you can explicitly map them in YAML:
+If your entity IDs follow custom naming patterns, you can map them explicitly in YAML:
 
 ```yaml
 type: custom:as7343-spectrum-card
@@ -104,25 +107,19 @@ entities:
   f7: sensor.my_sensor_f7
   f8: sensor.my_sensor_f8
   nir: sensor.my_sensor_nir
-  clear: sensor.my_sensor_clear
-  # Optional metrics:
+  # Optional:
   ppfd: sensor.my_sensor_ppfd
-  r_fr: sensor.my_sensor_r_fr
-  b_r: sensor.my_sensor_b_r
+  clear: sensor.my_sensor_clear
   lux: sensor.my_sensor_lux
-  cct: sensor.my_sensor_cct
 ```
 
 ---
 
 ## Acknowledgements & Credits
 
-This project was inspired by and builds upon the work of **[goatboynz/HA-par-spectrum-card](https://github.com/goatboynz/HA-par-spectrum-card)** (originally created for the AS7341 sensor). Thanks to **@goatboynz** for pioneering spectral visualization in Home Assistant.
-
-### Changes in this AS7343 version:
-- Adapted for the 14-channel ams-OSRAM AS7343 sensor (F1–F8, FZ, FY, FXL, NIR, VIS).
-- Uses Catmull-Rom spline interpolation for the curve.
-- Added summary tiles for ratios (R:FR, B:R) and estimated PPFD.
+- **ams-OSRAM**: For the AS7343 14-channel spectral sensor and the vendor basis reconstruction matrix.
+- **[latonita/HA-par-spectrum-card](https://github.com/latonita/HA-par-spectrum-card)**: For pioneering the integration of ams-OSRAM mathematical basis matrix reconstruction in Home Assistant Lovelace cards.
+- **[goatboynz/HA-par-spectrum-card](https://github.com/goatboynz/HA-par-spectrum-card)**: For the original spectral card concept and UI inspiration.
 
 ---
 
