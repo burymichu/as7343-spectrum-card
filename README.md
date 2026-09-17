@@ -7,6 +7,16 @@ A Home Assistant custom Lovelace card for visualizing spectral distribution and 
 
 This card performs **mathematical spectrum reconstruction** using ams-OSRAM's official 12-channel vendor basis matrix (125 spectral sample points, 380 nm to 1000 nm in 5 nm increments) and renders a smooth, high-resolution spectral curve scaled in physical **Spectral Irradiance [$\text{mW}/(\text{m}^2 \cdot \text{nm})$]**.
 
+## Acknowledgements & Credits
+
+This project was inspired by and builds upon the pioneering work of **[goatboynz/HA-par-spectrum-card](https://github.com/goatboynz/HA-par-spectrum-card)** and **[latonita/HA-par-spectrum-card](https://github.com/latonita/HA-par-spectrum-card)**.
+
+- **ams-OSRAM**: For the AS7343 14-channel spectral sensor and the official vendor basis reconstruction matrix.
+- **[latonita/HA-par-spectrum-card](https://github.com/latonita/HA-par-spectrum-card)**: For pioneering the integration of ams-OSRAM mathematical basis matrix reconstruction in Home Assistant Lovelace cards.
+- **[goatboynz/HA-par-spectrum-card](https://github.com/goatboynz/HA-par-spectrum-card)**: For the original spectral card concept and UI inspiration.
+
+---
+
 ![AS7343 Spectrum Card](LightSpectrumCard.png)
 
 ---
@@ -112,18 +122,6 @@ entities:
   clear: sensor.my_sensor_clear
   lux: sensor.my_sensor_lux
 ```
-
----
-
-## Acknowledgements & Credits
-
-This project was inspired by and builds upon the pioneering work of **[goatboynz/HA-par-spectrum-card](https://github.com/goatboynz/HA-par-spectrum-card)** and **[latonita/HA-par-spectrum-card](https://github.com/latonita/HA-par-spectrum-card)**.
-
-- **ams-OSRAM**: For the AS7343 14-channel spectral sensor and the official vendor basis reconstruction matrix.
-- **[latonita/HA-par-spectrum-card](https://github.com/latonita/HA-par-spectrum-card)**: For pioneering the integration of ams-OSRAM mathematical basis matrix reconstruction in Home Assistant Lovelace cards.
-- **[goatboynz/HA-par-spectrum-card](https://github.com/goatboynz/HA-par-spectrum-card)**: For the original spectral card concept and UI inspiration.
-
----
 
 ## License
 
