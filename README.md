@@ -117,14 +117,9 @@ entities:
 
 ## Acknowledgements & Credits
 
-This project was inspired by and builds upon the work of **[goatboynz/HA-par-spectrum-card](https://github.com/goatboynz/HA-par-spectrum-card)** (originally created for the AS7341 sensor). Thanks to **@goatboynz** for pioneering spectral visualization in Home Assistant.
+This project was inspired by and builds upon the pioneering work of **[goatboynz/HA-par-spectrum-card](https://github.com/goatboynz/HA-par-spectrum-card)** and **[latonita/HA-par-spectrum-card](https://github.com/latonita/HA-par-spectrum-card)**.
 
-### Changes in this AS7343 version:
-- Adapted for the 14-channel ams-OSRAM AS7343 sensor (F1–F8, FZ, FY, FXL, NIR, VIS).
-- Added summary tiles for ratios (R:FR, B:R) and estimated PPFD.
-
-### Credits
-- **ams-OSRAM**: For the AS7343 14-channel spectral sensor and the vendor basis reconstruction matrix.
+- **ams-OSRAM**: For the AS7343 14-channel spectral sensor and the official vendor basis reconstruction matrix.
 - **[latonita/HA-par-spectrum-card](https://github.com/latonita/HA-par-spectrum-card)**: For pioneering the integration of ams-OSRAM mathematical basis matrix reconstruction in Home Assistant Lovelace cards.
 - **[goatboynz/HA-par-spectrum-card](https://github.com/goatboynz/HA-par-spectrum-card)**: For the original spectral card concept and UI inspiration.
 
