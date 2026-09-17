@@ -7,7 +7,7 @@ A Home Assistant custom Lovelace card for visualizing spectral distribution and 
 
 This card performs **mathematical spectrum reconstruction** using ams-OSRAM's official 12-channel vendor basis matrix (125 spectral sample points, 380 nm to 1000 nm in 5 nm increments) and renders a smooth, high-resolution spectral curve scaled in physical **Spectral Irradiance [$\text{mW}/(\text{m}^2 \cdot \text{nm})$]**.
 
-![AS7343 Spectrum Card](screenshot.png)
+![AS7343 Spectrum Card](LightSpectrumCard.png)
 
 ---
 
